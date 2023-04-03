@@ -3,7 +3,7 @@ import {ConfigService} from "@nestjs/config";
 
 export const getTypeOrmConfig = async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
   type: "postgres",
-  host: 'localhost',
+  host: configService.get<string>('DB_HOST'),
   port: configService.get<number>('DB_PORT'),
   database: configService.get<string>('DB_DATABASE'),
   username: configService.get<string>('DB_USERNAME'),

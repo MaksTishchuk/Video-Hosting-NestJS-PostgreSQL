@@ -9,10 +9,14 @@ import { AuthModule } from './auth/auth.module';
 import { FilesModule } from './files/files.module';
 import {ServeStaticModule} from "@nestjs/serve-static";
 import * as path from 'path'
+import {configSchemaValidation} from "./config/schema.config";
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule.forRoot({
+      envFilePath: `stage.${process.env.NODE_ENV}.env`,
+      validationSchema: configSchemaValidation
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

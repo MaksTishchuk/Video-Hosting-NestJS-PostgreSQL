@@ -1,5 +1,4 @@
 import {
-  Body,
   Controller,
   Post,
   Query,
@@ -9,9 +8,8 @@ import {
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
-import {GetUser} from "../auth/decorators/get-user.decorator";
-import {CreateVideoDto} from "../video/dto/create-video.dto";
 import {FileInterceptor} from "@nestjs/platform-express";
+import { Express } from 'express'
 
 @Controller('files')
 export class FilesController {

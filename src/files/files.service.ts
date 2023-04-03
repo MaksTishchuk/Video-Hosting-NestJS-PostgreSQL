@@ -1,9 +1,8 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
-import {ensureDir, writeFile} from 'fs-extra'
-import {IMediaInterface} from "./interfaces/media.interface";
-import * as shortId from 'shortId'
+import * as shortId from 'shortid'
 import * as path from 'path'
 import  * as fs from 'fs'
+import { Express } from 'express'
 
 @Injectable()
 export class FilesService {
