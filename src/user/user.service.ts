@@ -1,10 +1,17 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+  NotFoundException
+} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {UserEntity} from "../entities/user.entity";
 import {Repository} from "typeorm";
 import {SubscriptionEntity} from "../entities/subscribtions.entity";
 import {UpdateUserDto} from "./dto/update-user.dto";
 import {FilesService} from "../files/files.service";
+import { Cache } from 'cache-manager'
 
 @Injectable()
 export class UserService {
@@ -14,11 +21,16 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(SubscriptionEntity)
     private readonly subscriptionRepository: Repository<SubscriptionEntity>,
-    private fileService: FilesService
+    private fileService: FilesService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async getAllUsers() {
-    return await this.userRepository.find({order: {createdAt: 'desc'}})
+    let users = await this.cacheManager.get('users')
+    if (users) return users
+    users = await this.userRepository.find({order: {createdAt: 'desc'}})
+    await this.cacheManager.set('users', users)
+    return users
   }
 
   async getUserById(id: number) {

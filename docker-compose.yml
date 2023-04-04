@@ -5,16 +5,19 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
+    container_name: server
     ports:
       - 4000:4000
     volumes:
       - ./src:/app/src
     depends_on:
       - db
+      - redis
 
   db:
     image: postgres
     restart: always
+    container_name: db
     ports:
       - 5432:5432
     environment:
@@ -23,8 +26,22 @@ services:
   dbadmin:
     image: dpage/pgadmin4
     restart: always
+    container_name: dbadmin
     ports:
       - 5050:80
     environment:
       PGADMIN_DEFAULT_EMAIL: maks@admin.com
       PGADMIN_DEFAULT_PASSWORD: maksadmin
+
+  redis:
+    image: redis
+    restart: unless-stopped
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+
+volumes:
+  redis:
+    driver: local

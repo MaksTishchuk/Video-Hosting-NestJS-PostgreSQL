@@ -1,4 +1,10 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+  NotFoundException
+} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
 import {UserEntity} from "../entities/user.entity";
 import {FindOptionsWhereProperty, ILike, MoreThan, Repository} from "typeorm";
@@ -6,6 +12,7 @@ import {VideoEntity} from "../entities/video.entity";
 import {UpdateVideoDto} from "./dto/update-video.dto";
 import {CreateVideoDto} from "./dto/create-video.dto";
 import {FilesService} from "../files/files.service";
+import {Cache} from "cache-manager";
 
 @Injectable()
 export class VideoService {
@@ -14,7 +21,8 @@ export class VideoService {
     private readonly videoRepository: Repository<VideoEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-    private fileService: FilesService
+    private fileService: FilesService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async createVideo(userId: number, dto: CreateVideoDto, video, thumbnail) {
@@ -30,13 +38,17 @@ export class VideoService {
   }
 
   async getAllVideos(search?: string) {
+    if (!search) {
+      const videosFound = await this.cacheManager.get('videos')
+      if (videosFound) return videosFound
+    }
     let options: FindOptionsWhereProperty<VideoEntity> = {}
     if (search) {
       options = {
         name: ILike(`%${search}%`)
       }
     }
-    return await this.videoRepository.find({
+    const videos = await this.videoRepository.find({
       where: {...options, isPublic: true},
       order: {createdAt: 'desc'},
       relations: {user: true, comments: {user: true}},
@@ -47,10 +59,14 @@ export class VideoService {
         }
       }
     })
+    if (!search) await this.cacheManager.set('videos', videos)
+    return videos
   }
 
   async getMostPopularByViews() {
-    return this.videoRepository.find({
+    let popularVideos = await this.cacheManager.get('popularVideos')
+    if (popularVideos) return popularVideos
+    popularVideos = this.videoRepository.find({
       where: {views: MoreThan(0)},
       order: {views: 'desc'},
       relations: {user: true, comments: {user: true}},
@@ -61,6 +77,8 @@ export class VideoService {
         }
       }
     })
+    await this.cacheManager.set('popularVideos', popularVideos)
+    return popularVideos
   }
 
   async getVideoById(id: number, isPublic = false) {

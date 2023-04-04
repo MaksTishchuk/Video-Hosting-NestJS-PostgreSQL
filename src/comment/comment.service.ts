@@ -1,17 +1,23 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+  NotFoundException
+} from '@nestjs/common';
 import {InjectRepository} from "@nestjs/typeorm";
-import {FindOptionsWhereProperty, ILike, Repository} from "typeorm";
+import {Repository} from "typeorm";
 import {CommentEntity} from "../entities/comment.entity";
 import {CommentDto} from "./dto/comment.dto";
-import {VideoEntity} from "../entities/video.entity";
-import {UpdateVideoDto} from "../video/dto/update-video.dto";
+import {Cache} from "cache-manager";
 
 @Injectable()
 export class CommentService {
 
   constructor(
     @InjectRepository(CommentEntity)
-    private readonly commentRepository: Repository<CommentEntity>
+    private readonly commentRepository: Repository<CommentEntity>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   async createComment(userId: number, dto: CommentDto) {
@@ -24,7 +30,9 @@ export class CommentService {
   }
 
   async getAllComments() {
-    return await this.commentRepository.find({
+    let comments = await this.cacheManager.get('comments')
+    if (comments) return comments
+    comments = await this.commentRepository.find({
       order: {createdAt: 'desc'},
       relations: {user: true, video: {user: true}},
       select: {
@@ -34,6 +42,8 @@ export class CommentService {
         }
       }
     })
+    await this.cacheManager.set('comments', comments)
+    return comments
   }
 
   async getCommentById(id: number) {
