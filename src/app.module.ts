@@ -11,6 +11,7 @@ import {ServeStaticModule} from "@nestjs/serve-static";
 import * as path from 'path'
 import {configSchemaValidation} from "./config/schema.config";
 import {getRedisConfig} from "./config/redis.config";
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import {getRedisConfig} from "./config/redis.config";
     VideoModule,
     CommentModule,
     AuthModule,
-    FilesModule
+    FilesModule,
+    SearchModule
   ],
   controllers: [],
   providers: [],

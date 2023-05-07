@@ -13,6 +13,7 @@ services:
     depends_on:
       - db
       - redis
+      - elasticsearch
 
   db:
     image: postgres
@@ -22,6 +23,8 @@ services:
       - 5432:5432
     environment:
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pgdata:/app/var/lib/postgresql/data
 
   dbadmin:
     image: dpage/pgadmin4
@@ -32,6 +35,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: maks@admin.com
       PGADMIN_DEFAULT_PASSWORD: maksadmin
+    volumes:
+      - ./pgadmin-data:/app/var/lib/pgadmin
 
   redis:
     image: redis
@@ -40,8 +45,28 @@ services:
     ports:
       - 6379:6379
     volumes:
-      - redis:/data
+      - redis:/app/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.9.1
+    container_name: vh-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=datasearch
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.initial_master_nodes=elasticsearch
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./data/elastic:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
 
 volumes:
+  pgdata:
+  pgadmin-data:
   redis:
     driver: local
